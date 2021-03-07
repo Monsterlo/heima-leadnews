@@ -1,5 +1,6 @@
 package com.heima.apis.article;
 
+import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -26,4 +27,8 @@ public interface IArticleClient {
      */
     @PostMapping("/api/v1/author/save")
     public ResponseResult save(@RequestBody ApAuthor apAuthor);
+
+
+    @PostMapping("/api/v1/article/save")
+    public ResponseResult saveArticle(ArticleDto articleDto);
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heima.common.constants.admin.NewsAutoScanConstants;
 import com.heima.common.constants.wemedia.WemediaConstants;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -245,24 +247,29 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
 
     @Autowired
     private WmNewsMaterialMapper wmNewsMaterialMapper;
+    @Autowired
+    private KafkaTemplate kafkaTemplate;
 
     //保存或者更新文章
-    private void saveOrUpdateWmNews(WmNews wmNews, Short isSumit) {
+    private void saveOrUpdateWmNews(WmNews wmNews, Short isSubmit) {
+        wmNews.setStatus(isSubmit);
         wmNews.setUserId(WmThreadLocalUtils.getUser().getId());
         wmNews.setCreatedTime(new Date());
         wmNews.setSubmitedTime(new Date());
-        wmNews.setStatus(isSumit);//保存草稿或提交审核
-        wmNews.setEnable((short)1); //设置为上架状态
-
-        if (wmNews.getId()!=null && wmNews.getId()>0){ //如果ID存储应该修改文章
-            //删除之前，先删除文章和素材的关系
-            wmNewsMaterialMapper.delete(Wrappers.<WmNewsMaterial>lambdaQuery().eq(WmNewsMaterial::getNewsId,wmNews.getId() ));
-
-            //根据ID更新文章
-            updateById(wmNews);
-
-        } else { //如果ID无值应该保存文章
-            save(wmNews);
+        wmNews.setEnable((short) 1);
+        boolean flag = false;
+        if (wmNews.getId() == null) {
+            flag = save(wmNews);
+        } else {
+            //如果是修改，则先删除素材与文章的关系
+            LambdaQueryWrapper<WmNewsMaterial> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.eq(WmNewsMaterial::getNewsId, wmNews.getId());
+            wmNewsMaterialMapper.delete(queryWrapper);
+            flag = updateById(wmNews);
+        }
+        //发送消息
+        if(flag){
+            kafkaTemplate.send(NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_TOPIC,JSON.toJSONString(wmNews.getId()));
         }
 
     }

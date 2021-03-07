@@ -3,6 +3,12 @@ server:
 spring:
   application:
     name: leadnews-wemedia
+  kafka:
+    bootstrap-servers: 192.168.200.130:9092
+    producer:
+      retries: 10
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   cloud:
     nacos:
       discovery:
@@ -21,7 +27,10 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
-  type-aliases-package: com.heima.model.media.pojos
+  type-aliases-package: com.heima.model.article.pojos
+  global-config:
+    datacenter-id: 1
+      workerId: 1
 #OSS配置
 file:
   oss:
@@ -39,3 +48,4 @@ file:
     white-list: 127.0.0.1
     connection-timeout: 10000
     prefix: material
+

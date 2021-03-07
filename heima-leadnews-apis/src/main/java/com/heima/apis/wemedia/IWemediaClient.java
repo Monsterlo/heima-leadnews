@@ -1,6 +1,7 @@
 package com.heima.apis.wemedia;
 
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.wemedia.pojos.WmNews;
 import com.heima.model.wemedia.pojos.WmUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,4 +27,16 @@ public interface IWemediaClient {
      */
     @GetMapping("/api/v1/user/findByName/{name}")
     public WmUser findByName(@PathVariable("name") String name);
+
+
+    @GetMapping("/api/v1/news/findone/{id}")
+    WmNews findNewsById(@PathVariable("id") Integer id);
+
+    @PostMapping("/api/v1/news/update")
+    ResponseResult updateWmNews (@RequestBody WmNews wmNews);
+
+    @GetMapping("/api/v1/user/findOne/{id}")
+    WmUser findWmUserById(@PathVariable("id") Long id);
+
+
 }
